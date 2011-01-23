@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- a Buildfile for PHING 2.4.3+ -->
+<project name="Project Name" default="dist">
+	<property file="./build.properties" />
+
+	<!-- performs the repository cleanup -->
+	<target name="clean">
+		<echo msg="Cleaning up build directories..." />
+		<delete includeemptydirs="true">
+			<fileset dir="${project.directory.build}">
+				<include name="**" />
+			</fileset>
+		</delete>
+		<delete>
+			<fileset dir="${project.directory.output}">
+				<include name="**" />
+			</fileset>
+		</delete>
+	</target>
+
+	<!-- prepares the build directories -->
+	<target name="prepare">
+		<echo msg="Making the build directories" />
+		<mkdir dir="${project.directory.build}" />
+		<mkdir dir="${project.directory.output}" />
+    </target>
+
+	<!-- builds the application in order to be released -->
+	<target name="build" depends="prepare">
+		<echo msg="Copying files" />
+
+		<!-- configure the list below to reflect the files in your project -->
+		<copy todir="${project.directory.build}/lib">
+			<fileset dir="./lib">
+				<include name="**/*.php" />
+			</fileset>
+		</copy>
+		<copy file="LICENSE" tofile="${project.directory.build}/LICENSE" overwrite="true"/>
+		<copy file="README.md" tofile="${project.directory.build}/README" overwrite="true"/>
+	</target>
+
+	<!-- create the distribution archives -->
+	<target name="dist" depends="build">
+		<echo msg="Creating archives..." />
+		<tar destfile="${project.directory.output}/${project.filename}-${project.version}.tar.gz" compression="gzip">
+			<fileset dir="${project.directory.build}">
+				<include name="**" />
+			</fileset>
+		</tar>
+		<tar destfile="${project.directory.output}/${project.filename}-${project.version}.tar.bz2" compression="bzip2">
+			<fileset dir="${project.directory.build}">
+				<include name="**" />
+			</fileset>
+		</tar>
+		<zip destfile="${project.directory.output}/${project.filename}-${project.version}.zip">
+			<fileset dir="${project.directory.build}">
+				<include name="**" />
+			</fileset>
+		</zip>
+		<pharpackage destfile="${project.directory.output}/${project.filename}.phar" basedir="./" signature="sha1">
+			<!-- configure the list below to include only the necessary PHP files -->
+			<fileset dir="${project.directory.build}/lib/">
+				<include name="**" />
+			</fileset>
+			<metadata>
+				<element name="name" value="${project.name}" />
+				<element name="version" value="${project.version}" />
+				<element name="copyright" value="Invenzzia Group" />
+				<element name="copyright-year" value="2008-${project.copyright-year}" />
+				<element name="website" value="http://www.invenzzia.org/" />
+				<element name="license" value="${project.license}" />
+				<element name="license-link" value="${project.license-url}" />
+			</metadata>
+		</pharpackage>
+		<echo msg="The archives have been successfully built and saved in ${project.directory.output}" />
+	</target>
+
+	<!-- deploys the distribution archives on a remote server -->
+	<target name="deploy">
+		<echo msg="Deploying the archives on the remote server..." />
+
+		<ftpdeploy host="${ftp.host}" port="${ftp.port}" username="${ftp.username}" password="${ftp.password}"
+			dir="${ftp.path.download}">
+			<fileset dir="${project.directory.output}">
+				<include name="${project.filename}-${project.version}.tar.bz2" />
+				<include name="${project.filename}-${project.version}.tar.gz" />
+				<include name="${project.filename}-${project.version}.zip" />
+			</fileset>
+		</ftpdeploy>
+
+		<ftpdeploy host="${ftp.host}" port="${ftp.port}" username="${ftp.username}" password="${ftp.password}"
+			dir="${ftp.path.phar}">
+			<fileset dir="${project.directory.output}">
+				<include name="${project.filename}.phar" />
+			</fileset>
+		</ftpdeploy>
+
+		<echo msg="Do not forget to update the website!" />
+	</target>
+
+	<!-- GIT workflow: starts a new feature branch -->
+	<target name="git-feature-start">
+		<echo msg="Starting a new feature branch..." />
+		<echo msg="---> develop ------>" />
+		<echo msg="        |" />
+		<echo msg="   feature-xy ----->" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg">The new feature branch name:</input>
+<!--
+		<gitcheckout repository="./" branchname="develop"></gitcheckout>
+		<gitbranch repository="./" branchname="${git-arg}"></gitbranch>
+		<gitcheckout repository="./" branchname="${git-arg}"></gitcheckout>
+-->
+	</target>
+
+	<!-- GIT workflow: integrates a new feature branch -->
+	<target name="git-feature-integrate">
+		<echo msg="Integrating the feature branch into develop..." />
+		<echo msg="---------------> develop ------>" />
+		<echo msg="                   ^" />
+		<echo msg="---> feature-xy ---+" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg">The name of the feature branch to be integrated:</input>
+	</target>
+
+	<!-- GIT workflow: prepares a new release branch -->
+	<target name="git-release-start">
+		<echo msg="Starting a new release branch..." />
+		<echo msg="---> develop --------->" />
+		<echo msg="        |" />
+		<echo msg="    release-x.x ------>" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg">Enter the minor release version number (x.y):</input>
+
+<!--
+		<gitcheckout repository="./" branchname="develop"></gitcheckout>
+		<gitbranch repository="./" branchname="release-${git-arg}"></gitbranch>
+		<gitcheckout repository="./" branchname="release-${git-arg}"></gitcheckout>
+
+-->
+	</target>
+
+	<!-- GIT workflow: prepare a release from a release branch -->
+	<target name="git-release-finish">
+		<echo msg="Finishing the release branch..." />
+		<echo msg="                          [TAG: x.x.0]" />
+		<echo msg="---------------------------> master ---->" />
+		<echo msg="                               ^" />
+		<echo msg="---------------> develop ------+--->" />
+		<echo msg="                    ^          |" />
+		<echo msg="---> release-x.x ---+----------+" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg">Enter the minor release version number (x.y):</input>
+	</target>
+
+	<!-- GIT workflow: start a hotfix branch -->
+	<target name="git-hotfix-start">
+		<echo msg="Starting a new hotfix branch..." />
+		<echo msg="---> master ------>" />
+		<echo msg="   [TAG: x.x.x]" />
+		<echo msg="        |" />
+		<echo msg="    hotfix-x.x.y -------->" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg1">Enter the initial tag version number (x.y.z):</input>
+		<input propertyname="git-arg2">Enter the new hotfix version number (x.y.z):</input>
+	</target>
+
+	<!-- GIT workflow: prepare a release from a hotfix branch -->
+	<target name="git-hotfix-finish">
+		<echo msg="Finishing the hotfix branch" />
+		<echo msg="                          [TAG: x.x.y]" />
+		<echo msg="---------------------------> master ---->" />
+		<echo msg="                               ^" />
+		<echo msg="---------------> develop ------+--->" />
+		<echo msg="                    ^          |" />
+		<echo msg="--> hotfix-x.x.y ---+----------+" />
+		<echo msg=""/>
+		<echo msg="The changes will be made to your local copy, and " />
+		<echo msg="won't be pushed to the origin." />
+		<input propertyname="git-arg">Enter the hotfix version number (x.y.z):</input>
+	</target>
+</project>

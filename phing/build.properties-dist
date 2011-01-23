@@ -1,0 +1,20 @@
+# Configure the project definitions here
+project.output.filename=projectfilename
+project.output.version=versionnumber
+
+# Configure your build directories here
+project.directory.build=./build
+project.directory.output=./output
+
+# Git deployment
+
+
+# FTP deployment
+ftp.enabled=no
+ftp.host=localhost
+ftp.user=...
+ftp.password=...
+ftp.path.download=...
+ftp.path.phar=...
+ftp.path.pear=...
+ftp.path.docs=...

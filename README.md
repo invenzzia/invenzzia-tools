@@ -46,15 +46,49 @@ Remember about:
 * adding `tests/cache/*` to `.gitignore`
 * adding `tests/coverage/html/*` to `.gitignore`
 
-PHAR generator
---------------
-
-To be done.
-
 PHING build files
 -----------------
 
-To be done.
+The `phing` directory contains some sample build files for [Phing](http://www.phing.info). If the
+project is written with PHP, it should be equipped with such a script that allows to perform
+the management actions.
+
+Project manager instructions:
+
+1. Copy `build.xml` and `build.properties-dist` to your project directory tree.
+2. **DO NOT** rename `build.properties-dist` to `build.properties`. This should be done by the end users
+3. Add **build.properties** to `.gitignore`
+4. Edit `build.xml`, and fix the project name and the copying file tasks in the `build` target.
+5. In addition, you should also update the PHAR file lists in the `dist` target.
+6. Commit the modifications.
+
+End-user instructions:
+
+1. Rename `build.properties-dist` to `build.properties`:
+2. Open this file in the editor.
+3. Configure the options to reflect your system and project status.
+4. Pay a careful attention to the version numbers and the FTP data.
+5. `build.properties` **must not** be commited to the repository!
+
+Available targets:
+
+* `clean` - cleans the build directories.
+* `prepare` - creates the build directories.
+* `build` - builds the release files in the build directory.
+* `dist` - creates the release packages: TAR.GZ, TAR.BZ2, ZIP, PHAR, PEAR2 package.
+* `deploy` - deploys the release packages to the project website server through FTP.
+
+Work-in-progress targets:
+
+* `git-feature-start`
+* `git-feature-finish`
+* `git-release-start`
+* `git-release-finish`
+* `git-hotfix-start`
+* `git-hotfix-finish`
+
+They will be used to ease the Git repository management with the [approved workflow](http://nvie.com/posts/a-successful-git-branching-model/).
+Unfortunately, some of them cannot be completed right now due to the lack of necessary options in Phing 2.4.x.
 
 Headers
 -------
