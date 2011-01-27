@@ -78,25 +78,28 @@
 
 	<!-- deploys the distribution archives on a remote server -->
 	<target name="deploy">
-		<echo msg="Deploying the archives on the remote server..." />
+		<if>
+			<equals arg1="${remote.enabled}" arg2="yes" />
+			<then>
+				<echo msg="Deploying the archives on the remote server..." />
+				<input propertyname="scp.passphrase">Private key pass-phrase:</input>
+				<scp username="${remote.user}" host="${remote.host}" pubkeyfile="${remote.pubkey}" privkeyfile="${remote.privkey}" privkeyfilepassphrase="${scp.passphrase}" todir="${remote.path.download}/${project.filename}" autocreate="true">
+					<fileset dir="${project.directory.output}">
+						<include name="${project.filename}-${project.version}.*" />
+					</fileset>
+				</scp>
+				<scp username="${remote.user}" host="${remote.host}" pubkeyfile="${remote.pubkey}" privkeyfile="${remote.privkey}" privkeyfilepassphrase="${scp.passphrase}" todir="${remote.path.phar}">
+					<fileset dir="${project.directory.output}">
+						<include name="${project.filename}.phar" />
+					</fileset>
+				</scp>
 
-		<ftpdeploy host="${ftp.host}" port="${ftp.port}" username="${ftp.username}" password="${ftp.password}"
-			dir="${ftp.path.download}">
-			<fileset dir="${project.directory.output}">
-				<include name="${project.filename}-${project.version}.tar.bz2" />
-				<include name="${project.filename}-${project.version}.tar.gz" />
-				<include name="${project.filename}-${project.version}.zip" />
-			</fileset>
-		</ftpdeploy>
-
-		<ftpdeploy host="${ftp.host}" port="${ftp.port}" username="${ftp.username}" password="${ftp.password}"
-			dir="${ftp.path.phar}">
-			<fileset dir="${project.directory.output}">
-				<include name="${project.filename}.phar" />
-			</fileset>
-		</ftpdeploy>
-
-		<echo msg="Do not forget to update the website!" />
+				<echo msg="Do not forget to update the website!" />
+			</then>
+			<else>
+				<echo msg="Remote deployment is not configured." />
+			</else>
+		</if>
 	</target>
 
 	<!-- GIT workflow: starts a new feature branch -->
